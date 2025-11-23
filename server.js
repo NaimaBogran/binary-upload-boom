@@ -1,3 +1,6 @@
+//everything needed to set up server
+//mods needed to make it work
+
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");

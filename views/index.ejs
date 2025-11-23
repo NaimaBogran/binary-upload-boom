@@ -1,11 +1,91 @@
 <%- include('partials/header') -%>
 
-<main class="container">
-    <div class="row justify-content-around mt-5">
-        <a href="/login" class="col-3 btn btn-primary"> Login</a>
-        <a href="/signup" class="col-3 btn btn-primary"> Signup</a>
-    </div>
-</main>
-    
+   <main>
+    <section class="main">
+        <h1>Connect with project partners who match your goals</h1>
 
-<%- include('partials/footer') -%>
+        <div class="textColumn">
+            <p>Find collaborators who share your vision and work rhythm. Build meaningful
+           connections through focused, intentional interactions.</p>
+            <button id="getStarted">Get started</button>
+            <button id="learnMore">Learn more</button>
+        </div>
+
+        <img src="/img/main-image.png">
+    </section>
+</main>
+
+<section class="features">
+    <div id="features">
+    <h4>Features</h4>
+    <h2>Powerful collaboration tools</h2>
+    <span>Discover a platform designed to streamline your project connections and goals.</span>
+    </div>
+
+    <div class="features-container">
+    <section class="connectSection">
+        <span>Connect</span>
+        <h3>Find your perfect project partner</h3>
+        <p>Filter collaborators by skills, interests, and project requirements with precision.</p>
+        <button type="button" class="explore" id="explore">Explore</button>
+        <button type="button" id="learn"><a href="">Learn<svg xmlns="http://www.w3.org/2000/svg" height="10px" viewBox="0 -960 960 960" width="15px" fill="#FFFFFF"><path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"/></svg></a></button>
+    </section>
+
+    <section class="pomodoroMethod">
+        <svg xmlns="http://www.w3.org/2000/svg" height="50px" viewBox="0 -960 960 960" width="50px" fill="#FFFFFF"><path d="M440-183v-274L200-596v274l240 139Zm80 0 240-139v-274L520-457v274Zm-40-343 237-137-237-137-237 137 237 137ZM160-252q-19-11-29.5-29T120-321v-318q0-22 10.5-40t29.5-29l280-161q19-11 40-11t40 11l280 161q19 11 29.5 29t10.5 40v318q0 22-10.5 40T800-252L520-91q-19 11-40 11t-40-11L160-252Zm320-228Z"/></svg>
+        <h3>Integrated productivity tracking</h3>
+        <p>Use the Pomodoro method to maintain focus and track progress.</p>
+        <a href="">Discover<svg xmlns="http://www.w3.org/2000/svg" height="10px" viewBox="0 -960 960 960" width="15px" fill="#FFFFFF"><path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"/></svg></a>
+    </section>
+
+    <section class="communicate">
+        <svg xmlns="http://www.w3.org/2000/svg" height="50px" viewBox="0 -960 960 960" width="50px" fill="#FFFFFF"><path d="M440-183v-274L200-596v274l240 139Zm80 0 240-139v-274L520-457v274Zm-40-343 237-137-237-137-237 137 237 137ZM160-252q-19-11-29.5-29T120-321v-318q0-22 10.5-40t29.5-29l280-161q19-11 40-11t40 11l280 161q19 11 29.5 29t10.5 40v318q0 22-10.5 40T800-252L520-91q-19 11-40 11t-40-11L160-252Zm320-228Z"/></svg>
+        <h3>Seamless communication tools</h3>
+        <p>Communicate effectively with built-in messaging and collaboration features.</p>
+        <a href="">Connect<svg xmlns="http://www.w3.org/2000/svg" height="10px" viewBox="0 -960 960 960" width="15px" fill="#FFFFFF"><path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"/></svg></a>
+    </section>
+    </div>
+</section>
+
+<section class="howTo">
+
+ <div class="howContent">
+  <div class="howItWorks">
+  <svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="#000000"><path d="m80-520 200-360 200 360H80Zm200 400q-66 0-113-47t-47-113q0-67 47-113.5T280-440q66 0 113 47t47 113q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T360-280q0-33-23.5-56.5T280-360q-33 0-56.5 23.5T200-280q0 33 23.5 56.5T280-200Zm-64-400h128l-64-115-64 115Zm304 480v-320h320v320H520Zm80-80h160v-160H600v160Zm80-320q-57-48-95.5-81T523-659q-23-25-33-47t-10-47q0-45 31.5-76t78.5-31q27 0 50.5 12.5T680-813q16-22 39.5-34.5T770-860q47 0 78.5 31t31.5 76q0 25-10 47t-33 47q-23 25-61.5 58T680-520Zm0-105q72-60 96-85t24-41q0-13-7.5-21t-20.5-8q-10 0-19.5 5.5T729-755l-49 47-49-47q-14-14-23.5-19.5T588-780q-13 0-20.5 8t-7.5 21q0 16 24 41t96 85Zm0-78Zm-400 45Zm0 378Zm400 0Z"/></svg> 
+  <div class="text">
+  <h4>How it works</h4>
+  <span>Create a profile that highlights your skills and project interests.</span>
+  </div>
+</div>
+
+  <div class="filters">
+  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M160-80q-33 0-56.5-23.5T80-160v-480q0-33 23.5-56.5T160-720h80v-80q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240h-80v80q0 33-23.5 56.5T640-80H160Zm160-240h480v-480H320v480Z"/></svg>
+  <div class="text">
+  <h4>Set filters</h4>
+  <span>Customize your search to find the most relevant project partners.</span>
+  </div>
+</div>
+
+  <div class="connecting">
+  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m600-200-57-56 184-184H80v-80h647L544-704l56-56 280 280-280 280Z"/></svg>
+  <div class="text">
+  <h4>Start connecting</h4>
+  <span>Engage with potential collaborators and begin your project journey.</span>
+  </div>
+</div>
+
+  <div class="cta-row">
+    <button type="button">Join now</button>
+    <a class="learn" href="">Learn 
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" width="15" height="15" fill="currentColor">
+        <path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"/>
+      </svg>
+    </a>
+  </div>
+
+  </div>
+
+  <img src="img/secondary-image.png">
+</section>
+
+<%- include ('partials/footer') -%>
