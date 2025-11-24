@@ -8,6 +8,9 @@ const { ensureAuth, ensureGuest } = require("../middleware/auth");
 =======
 const userPrefrencesController = require("../controllers/userPrefrences");
 const matchController = require("../controllers/matchUsers");
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 //Main Routes - simplified for now
@@ -29,6 +32,9 @@ router.get("/match", ensureAuth, matchController.findMatch);
 router.post("/match", ensureAuth, (req, res) =>{
     return res.redirect("/match"); //in case it does a POST /match, turns into a GET /match
 })
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 module.exports = router;
