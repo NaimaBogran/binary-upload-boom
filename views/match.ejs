@@ -1,0 +1,40 @@
+<%- include('partials/loggedInHeader') -%>
+
+<main class="match-page">
+    <h1>finding your BODY/DOUBLE...</h1>
+    <p id="status">connecting you with a partner who matches your prefrences</p>
+</main>
+
+<%- include('partials/footer') -%>
+
+<script>
+    //socket.io client
+    const socket = io();
+
+    const statusEl = document.getElementById("status");
+
+    //user + filter info from server
+    const userInfo = {
+        userId: "<%= user._id %>",
+        userName: "<%= user.userName %>",
+        camera: "<%= filters.camera %>",
+        workType: <%- JSON.stringify(filters.workType || []) %>
+    };
+
+    //ask server to find a match
+    socket.emit("lookingForMatch", userInfo);
+
+    socket.on("waiting", () => {
+        statusEl.textContent = "waiting for another user to join...";
+    });
+
+    socket.on("matchFound", ({ roomId, partner }) => {
+        statusEl.textContent = `matched with ${partner.usrName}! redirecting...`;
+
+        //redirect both users to the same chat room
+        const url = `/textChat/${roomId}?partnerName=${encodeURIComponent(
+            partner.userName
+        )}`;
+        window.location.href = url;
+    });
+</script>

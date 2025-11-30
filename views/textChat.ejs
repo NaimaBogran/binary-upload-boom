@@ -1,6 +1,104 @@
 <%- include ('partials/loggedInHeader') -%>
 
-<h1>focus session with <%= partner.userName %></h1>
-<p>camera: <%= myCameraPref %></p>
+<main class="chat-page">
+<h1>
+    focus session with 
+    <span id="partnerName"><%= partnerName %></span>
+</h1>
+
+
+<p>stay focused together for 25 minutes, then enjoy a 5 minute solo break!</p>
+
+<div id="timer" class="timer">25:00</div>
+
+<ul id="messages"></ul>
+
+<form id="chat-form" autocomplete="off">
+    <input id="m" placeholder="type a message...">
+    <button type="submit">send</button>
+    <a href="/match" id="signup">find a new partner</a>
+</form>
+</main>
 
 <%- include ('partials/footer') -%>
+
+
+<script>
+    //connects the usr to socket.io server
+    //creates a live WebSocket connection
+  const socket = io();
+
+  //roomId is sent from matchUsers.js when rendering textChat.ejs
+  //makes sure each matched pair enters the same private room
+  const roomId = "<%= roomId %>"; // comes from controller
+  const myName = "<%= user.userName %>";
+  const partnerNameFromServer = "<%= partnerName %>";
+
+  const partnerNameEl = document.getElementById("partnerName");
+  partnerNameEl.textContent = partnerNameFromServer || "your partner";
+
+  const form = document.getElementById("chat-form");
+  const input = document.getElementById("m");
+  const messages = document.getElementById("messages");
+  const timerEl = document.getElementById("timer");
+
+  //asks server to place this socket into the specific room
+  //server checks if room is full that way only 2 users can be in each room
+  socket.emit("joinRoom", { roomId });
+
+
+  //when user submits a message
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();//prevents page reload
+
+    const message = input.value.trim();//removes whitespaces
+    if (!message) return;//stops empty messages from sending
+
+    //send the message + roomId to server
+    socket.emit("chatMessage", { roomId, message, senderName: myName });
+    input.value = "";//clears the input box
+  });
+
+
+  //when server sends a message back...
+  socket.on("chatMessage", (data) => {
+    const li = document.createElement("p");//creates a new "list" item
+    li.textContent = data.message;//puts message text into the item
+    messages.appendChild(li);//adds it to the chat list
+
+    //auto-scroll chat to the bottom
+    messages.scrollTop = messages.scrollHeight;
+  });
+//keeps only 2 users per room
+  socket.on("roomFull", () => {
+    alert("This room is already full.");
+  });
+
+  socket.on("partnerDisconnected", () => {
+    alert("your partner disconnected :(");
+    window.location.href = "/match"
+  });
+
+  //pomodoro focus timer: 25 min
+
+  let focusSeconds = 25 * 60;
+
+  function updateFocusTimer() {
+    const mins = String(Math.floor(focusSeconds / 60)).padStart(2, "0");
+    const secs = String(focusSeconds % 60).padStart(2, "0");
+    timerEl.textContent = `${mins}:${secs}`;
+
+    if (focusSeconds <= 0) {
+        //times up => go to solo break room
+        const url = `/break?roomId=${encodeURIComponent(
+            roomId
+        )}&partnerName=${encodeURIComponent(partnerNameFromServer)}`;
+        window.location.href = url;
+    } else {
+        focusSeconds--;
+    }
+  }
+
+  updateFocusTimer();
+  setInterval(updateFocusTimer, 1000);
+</script>

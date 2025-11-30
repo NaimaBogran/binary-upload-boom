@@ -4,23 +4,25 @@ const User = require("../models/User");
 exports.findMatch = (req, res) => {
 
   // get current user's filters
-  Filters.findOne({ user: req.user.id })
+  Filters.findOne({ userId: req.user.id })
     .lean()
     .then((currentUserFilters) => {
       if (!currentUserFilters) {
         return res.send("Please set your filters first.");
       }
 
-      const myFilters = currentUserFilters.filter;
-
       //extracts the user's camera preference ( on or off)
-      const myCameraPref = myFilters.includes("on") ? "on" : "off";
+      const myCameraPref = currentUserFilters.camera;
+      const myWorkTypes = currentUserFilters.workType || []; //array
+      const TEN_MINUTES = 10 * 60 * 1000;
+      const cutoff = new Date(Date.now() - TEN_MINUTES);
 
       // find all valid matching users
       return Filters.find({
-        user: { $ne: req.user.id },    // not the same user
-        filter:{ $in: [myCameraPref] }           // share same camera preference
-        // filter: { $in: myFilters }   // at least one shared filter, I want to include this one but not enough users at the moment, so i won't narrow it down as much 
+        userId: { $ne: req.user.id },    // not the same user
+        camera: myCameraPref,            // share same camera preference
+        // workType: { $in: myWorkTypes }   // at least one shared filter, I want to include this one but not enough users at the moment, so i won't narrow it down as much 
+        updatedAt: { $gte: cutoff },
       })
         .lean()
         .then((candidates) => {
@@ -33,19 +35,24 @@ exports.findMatch = (req, res) => {
             candidates[Math.floor(Math.random() * candidates.length)];
 
           // fetch matched user's profile
-          return User.findById(randomCandidate.user)
+          return User.findById(randomCandidate.userId)
             .lean()
             .then((matchUser) => {
+                //generates a roomId based on both users
+                const roomId = `${req.user._id}-${matchUser._id}`;
+
               // render the match page
               if (myCameraPref === "on") {
                 return res.render("videoChat", {
                     partner: matchUser,
                     myCameraPref,
+                    roomId,
                  });
                 } else {
                 return res.render("textChat", {
                     partner: matchUser,
                     myCameraPref,
+                    roomId,
              });
               }
             });

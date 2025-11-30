@@ -1,0 +1,49 @@
+<%- include('partials/loggedInHeader') -%>
+
+<main class="break-page">
+    <h1>time to take a break</h1>
+    <p>
+    you just completed a focus session with
+    <strong><%= partnerName %></strong>
+    </p>
+    <p>take 5 minutes to stretch, breathe, and reset away from your screen.</p>
+    <p>don't forget to hydrate and move your body!</p>
+
+    <div id="timer" class="timer">5:00</div>
+
+    <div id="breakActions" style="display: none; margin-top: 16px;">
+        <p>your break is over. what would you like to do?</p>
+
+        <% if (roomId) { %>
+            <li>
+        <ul> <a href="/textChat/<%= roomId %>?partnerName=<%= encodeURIComponent(partnerName) %>" class="btn"> continue with the same partner </a> </ul>
+        
+         <% } %>
+       
+        <ul> <a href="/match" class="btn">find a new partner</a> </ul>
+            </li>
+    </div>
+</main>
+
+<%- include ('partials/footer') -%>
+
+<script>
+    const timerEl = document.getElementById("timer")
+    let breakSeconds = 5 * 60;
+
+   function updateBreakTimer() {
+    const mins = String(Math.floor(breakSeconds / 60)).padStart(2, "0");
+    const secs = String(breakSeconds % 60).padStart(2, "0");
+    timerEl.textContent = `${mins}:${secs}`;
+
+    if(breakSeconds <=0)  {
+        //shows options after 5 mins is up
+        breakActions.style.display = "block";
+    }else {
+        breakSeconds--;
+    }
+}
+
+updateBreakTimer();
+setInterval(updateBreakTimer, 1000);
+</script>
