@@ -1,7 +1,383 @@
-<%- include ('partials/loggedInHeader') -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include("partials/loggedInHeader") %>
 
-<h1>you're paired with <%= partner.userName %></h1>
-<p>camera: <%= myCameraPref %></p>
+<style>
+/* ===============================
+        VIDEO LAYOUT
+================================ */
+#video-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 35px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
 
-<%- include ('partials/footer') -%>
+.video-box {
+    width: 430px;
+    height: 330px;
+    background: #000000;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
+.video-box video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-label {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    text-shadow: 0 0 5px black;
+}
+
+/* ===============================
+            TIMER
+================================ */
+#timer {
+    background: #ffffff;
+    padding: 20px 25px;
+    border-radius: 12px;
+    font-size: 25px;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0,0,0,0.15);
+    min-width: 110px;
+    border: 2px solid lightgray;
+}
+
+/* ===============================
+            CHAT (MATCH VIDEO STYLE)
+================================ */
+#chat-section {
+    width: 100%;
+    max-width: 900px;
+    margin: 40px auto 0 auto;
+}
+
+#messages {
+    list-style: none;
+    padding: 15px;
+    margin-bottom: 15px;
+    height: 180px;
+    overflow-y: auto;
+    border-radius: 18px;
+    background: #000;
+    color: white;
+    border: 2px solid #333;
+}
+
+#messages p {
+    margin: 5px 0;
+    padding: 6px 10px;
+    background: #222;
+    border-radius: 8px;
+}
+
+/* Chat form */
+#chat-form {
+    display: flex;
+    gap: 12px;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #555;
+    background: #111;
+    color: white;
+}
+
+#sendBtn {
+    padding: 12px 18px;
+    background: #333294;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Bottom controls */
+#findNewBtn {
+    margin-top: 25px;
+    padding: 14px 24px;
+    background: #bfa0fe;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1 style="text-align:center; margin-top: 20px;">
+    focus session with <%= partnerName %>
+</h1>
+
+<p style="text-align:center;">stay focused together for 25 minutes, then enjoy a 5 minute solo break!</p>
+
+
+<!-- ===============================
+          VIDEO + TIMER
+================================ -->
+<section id="video-wrapper">
+    <div class="video-box">
+        <p class="video-label">you</p>
+        <video id="localVideo" autoplay playsinline muted></video>
+    </div>
+
+    <div id="timer">25:00</div>
+
+    <div class="video-box">
+        <p class="video-label"><%= partnerName %></p>
+        <video id="remoteVideo" autoplay playsinline muted></video>
+    </div>
+</section>
+
+
+<!-- ===============================
+            CHAT SECTION
+================================ -->
+<section id="chat-section">
+
+    <ul id="messages"></ul>
+
+    <form id="chat-form" autocomplete="off">
+        <input id="chat-input" placeholder="type a message..." />
+        <button id="sendBtn" type="submit">send</button>
+    </form>
+
+    <button id="findNewBtn" onclick="window.location.href='/match'">
+        find new double
+    </button>
+</section>
+
+
+<%- include("partials/footer") %>
+
+
+<script>
+/* ======================================
+        SOCKET + GLOBAL VARS
+====================================== */
+const socket = io();
+
+const roomId = "<%= roomId %>";
+const myName = "<%= user.userName %>";
+const partnerName = "<%= partnerName %>";
+const isCaller = "<%= isCaller %>" === "true";
+
+socket.emit("joinRoom", { roomId });
+
+/* ======================================
+        CHAT 
+====================================== */
+const form = document.getElementById("chat-form");
+const input = document.getElementById("chat-input");
+const messages = document.getElementById("messages");
+
+form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
+
+    socket.emit("chatMessage", {
+        roomId,
+        message,
+        senderName: myName
+    });
+
+    input.value = "";
+});
+
+socket.on("chatMessage", (data) => {
+    const p = document.createElement("p");
+    p.textContent = `${data.senderName}: ${data.message}`;
+    messages.appendChild(p);
+    messages.scrollTop = messages.scrollHeight;
+});
+
+/* ======================================
+        PARTNER DISCONNECT
+====================================== */
+socket.on("partnerDisconnected", () => {
+    cleanupVideo();
+    alert("your partner disconnected :(");
+    window.location.href = "/match";
+});
+
+/* ======================================
+        25-MIN POMODORO TIMER
+====================================== */
+let focusSeconds = 25 * 60;
+const timerEl = document.getElementById("timer");
+
+function updateFocusTimer() {
+    const mins = String(Math.floor(focusSeconds / 60)).padStart(2, "0");
+    const secs = String(focusSeconds % 60).padStart(2, "0");
+    timerEl.textContent = `${mins}:${secs}`;
+
+    if (focusSeconds <= 0) {
+        // time's up → end call + go to break
+        cleanupVideo();
+        window.location.href = `/break?roomId=${roomId}&partnerName=${partnerName}`;
+    } else {
+        focusSeconds--;
+    }
+}
+
+updateFocusTimer();
+setInterval(updateFocusTimer, 1000);
+
+
+/* ======================================
+        WEBRTC VIDEO
+====================================== */
+let localStream;
+let peerConnection;
+
+const rtcConfig = {
+    iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        {
+            urls: "turn:relay1.expressturn.com:3478",
+            username: "efQ8YHkNg1NtQxel3I",
+            credential: "Yp8Qk7x3QV0S4Dxi"
+        }
+    ]
+};
+
+// gets local media and then, if caller, start the call
+async function setupLocalMedia() {
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: "user",
+                width: { ideal: 1280 },
+                height: { ideal: 720 } 
+            },
+            audio: true,
+        });
+
+        document.getElementById("localVideo").srcObject = localStream;
+
+        if (isCaller) {
+            await startCallAsCaller();
+        }
+    } catch (err) {
+        console.error("Error accessing camera/mic:", err);
+        alert("Could not access camera/microphone. Please check your permissions.");
+    }
+}
+
+function createPeerConnection() {
+    peerConnection = new RTCPeerConnection(rtcConfig);
+
+    peerConnection.onicecandidate = (e) => {
+        if (e.candidate) {
+            socket.emit("iceCandidate", { roomId, candidate: e.candidate });
+        }
+    };
+
+    peerConnection.ontrack = (e) => {
+        document.getElementById("remoteVideo").srcObject = e.streams[0];
+    };
+
+    if (localStream) {
+        localStream.getTracks().forEach((track) => {
+            peerConnection.addTrack(track, localStream);
+        });
+    }
+}
+
+// caller: create offer
+async function startCallAsCaller() {
+    createPeerConnection();
+
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+
+    socket.emit("offer", { roomId, offer });
+}
+
+// callee: receive offer → create answer
+socket.on("offer", async ({ offer }) => {
+    if (isCaller) return; // caller should not re-handle offer
+
+    createPeerConnection();
+
+    await peerConnection.setRemoteDescription(offer);
+
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+
+    socket.emit("answer", { roomId, answer });
+});
+
+// caller: receive answer
+socket.on("answer", async ({ answer }) => {
+    if (peerConnection) {
+        await peerConnection.setRemoteDescription(answer);
+    }
+});
+
+// both: handle ICE candidates
+socket.on("iceCandidate", async ({ candidate }) => {
+    if (peerConnection && candidate) {
+        try {
+            await peerConnection.addIceCandidate(candidate);
+        } catch (err) {
+            console.error("Error adding ICE candidate:", err);
+        }
+    }
+});
+
+// cleanup function, no socket emits
+function cleanupVideo() {
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+
+    if (localStream) {
+        localStream.getTracks().forEach((t) => t.stop());
+        localStream = null;
+    }
+
+    document.getElementById("localVideo").srcObject = null;
+    document.getElementById("remoteVideo").srcObject = null;
+}
+
+// on page unload, just clean up locally;
+// socket disconnect will notify partner via server
+window.addEventListener("beforeunload", cleanupVideo);
+
+// starts camera/mic
+if (isCaller) {
+    setupLocalMedia();
+} else {
+    // other browsers fix: delay callee media start to avoid camera startup conflict
+    setTimeout(() => setupLocalMedia(), 300);
+}
+
+</script>
+</body>
+</html>

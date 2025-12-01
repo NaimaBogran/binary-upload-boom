@@ -39,6 +39,19 @@ router.get("/match", ensureAuth, async (req, res) => {
     res.render("match", { filters });
 });
 
+//video chat (25 min focus sessions)
+router.get("/videoChat/:roomId", ensureAuth, (req, res) => {
+    const { roomId } = req.params;
+    const partnerName = req.query.partnerName || "your partner";
+    const isCaller = req.query.isCaller === "true";
+
+    res.render("videoChat", {
+        roomId,
+        partnerName,
+        isCaller,
+    });
+});
+
 //chat room (25 min focus sessions)
 router.get("/textChat/:roomId", ensureAuth, (req, res) => {
     const roomId = req.params.roomId;

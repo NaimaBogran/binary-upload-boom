@@ -107,12 +107,14 @@ socket.on("lookingForMatch", (userInfo) => {
   io.to(partner.socketId).emit("matchFound", {
     roomId,
     partner: userInfo, //partner for user a
-});
+    isCaller: true
+  });
 
   io.to(socket.id).emit("matchFound", {
     roomId,
     partner: partner.userInfo, //partner for user b
-   });
+    isCaller: false
+  });
 });
 
   socket.on("joinRoom", ({ roomId }) => {
@@ -130,6 +132,26 @@ socket.on("lookingForMatch", (userInfo) => {
     console.log(`${socket.id} joined room ${roomId}`);
   });
 
+  //webrtc signaling
+  socket.on("readyToCall", ({roomId}) => {
+    socket.to(roomId).emit("readyToCall");
+  });
+
+  socket.on("stopVideo", ({ roomId }) => {
+    socket.to(roomId).emit("stopVideo");
+  });
+
+  socket.on("offer", ({ roomId, offer }) => {
+    socket.to(roomId).emit("offer", { offer });
+  });
+
+  socket.on("answer", ({ roomId, answer }) => {
+    socket.to(roomId).emit("answer", { answer });
+  });
+
+  socket.on("iceCandidate", ({ roomId, candidate }) => {
+    socket.to(roomId).emit("iceCandidate", { candidate });
+  });
   //when a chat is sent
   socket.on("chatMessage", ({ roomId, message, senderName }) => {
     io.to(roomId).emit("chatMessage", {
@@ -165,3 +187,20 @@ const PORT = process.env.PORT;
 server.listen(PORT, () => {
   console.log("Server is running, you better catch it!");
 });
+
+// Download the helper library from https://www.twilio.com/docs/node/install
+const twilio = require("twilio"); // Or, for ESM: import twilio from "twilio";
+
+// Find your Account SID and Auth Token at twilio.com/console
+// and set the environment variables. See http://twil.io/secure
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = twilio(accountSid, authToken);
+
+async function createToken() {
+  const token = await client.tokens.create();
+
+  console.log(token.accountSid);
+}
+
+createToken();

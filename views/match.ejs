@@ -28,13 +28,32 @@
         statusEl.textContent = "waiting for another user to join...";
     });
 
-    socket.on("matchFound", ({ roomId, partner }) => {
-        statusEl.textContent = `matched with ${partner.usrName}! redirecting...`;
+    socket.on("matchFound", ({ roomId, partner, isCaller }) => {
+        const myCamera = "<%= filters.camera %>"; //on or off
 
-        //redirect both users to the same chat room
-        const url = `/textChat/${roomId}?partnerName=${encodeURIComponent(
-            partner.userName
-        )}`;
-        window.location.href = url;
-    });
+        statusEl.innerHTML = `
+            matched with <strong>${partner.userName}</strong><br><br>
+            <button id="enterRoomBtn" style="
+                padding: 12px 24px;
+                background: #bfa0fe;
+                border: none;
+                border-radius: 12px;
+                font-size: 20px;
+                cursor: pointer;
+                font-weight: bold;
+            ">
+                enter room
+            </button>
+        `;
+        document.getElementById("enterRoomBtn").addEventListener("click", () => {
+            if (myCamera === "on") {
+                window.location.href =
+                `/videoChat/${roomId}?partnerName=${encodeURIComponent(partner.userName)}&isCaller=${isCaller}`;
+            } else {
+                window.location.href = 
+                `/textChat/${roomId}?partnerName=${encodeURIComponent(partner.userName)}`;
+            }
+        });
+    })
+        
 </script>
