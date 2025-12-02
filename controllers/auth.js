@@ -65,6 +65,14 @@ exports.getSignup = (req, res) => {
   });
 };
 
+exports.getBreak = (req, res) => {
+  res.render("breakRoom", {
+    roomId: req.query.roomId,
+    partnerName: req.query.partnerName,
+    mode: req.query.mode, // "video" or "text"
+  });
+};
+
 exports.postSignup = (req, res, next) => {
   const validationErrors = [];
   if (!validator.isEmail(req.body.email))

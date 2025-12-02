@@ -1,108 +1,192 @@
-<%- include ('partials/loggedInHeader') -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include("partials/loggedInHeader") %>
 
-<main class="chat-page">
-<h1>
+<style>
+/* ===============================
+            TIMER
+================================ */
+#timer {
+    background: #ffffff;
+    padding: 20px 25px;
+    border-radius: 12px;
+    font-size: 25px;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0,0,0,0.15);
+    min-width: 110px;
+    border: 2px solid lightgray;
+}
+
+/* ===============================
+            CHAT (MATCH VIDEO STYLE)
+================================ */
+#chat-section {
+    width: 100%;
+    max-width: 900px;
+    margin: 40px auto 0 auto;
+}
+
+#messages {
+    list-style: none;
+    padding: 15px;
+    margin-bottom: 15px;
+    height: 180px;
+    overflow-y: auto;
+    border-radius: 18px;
+    background: #000;
+    color: white;
+    border: 2px solid #333;
+}
+
+#messages p {
+    margin: 5px 0;
+    padding: 6px 10px;
+    background: #222;
+    border-radius: 8px;
+}
+
+/* Chat form */
+#chat-form {
+    display: flex;
+    gap: 12px;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #555;
+    background: #111;
+    color: white;
+}
+
+#sendBtn {
+    padding: 12px 18px;
+    background: #333294;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Bottom controls */
+#findNewBtn {
+    margin-top: 25px;
+    padding: 14px 24px;
+    background: #bfa0fe;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1 style="text-align:center; margin-top: 20px;">
     focus session with 
     <span id="partnerName"><%= partnerName %></span>
 </h1>
 
+<p style="text-align:center;">
+    stay focused together for 25 minutes, then enjoy a 5 minute solo break!
+</p>
 
-<p>stay focused together for 25 minutes, then enjoy a 5 minute solo break!</p>
+<!-- TIMER -->
+<div id="timer" style="margin: 20px auto; width: fit-content;">25:00</div>
 
-<div id="timer" class="timer">25:00</div>
+<!-- CHAT SECTION -->
+<section id="chat-section">
 
-<ul id="messages"></ul>
+    <ul id="messages"></ul>
 
-<form id="chat-form" autocomplete="off">
-    <input id="m" placeholder="type a message...">
-    <button type="submit">send</button>
-    <section id="bottom-controls">
-        <button id="findNewBtn" onclick="window.location.href='/match'">
-            find new double
-        </button>
-    </section>
-</form>
-</main>
+    <form id="chat-form" autocomplete="off">
+        <input id="chat-input" placeholder="type a message..." />
+        <button id="sendBtn" type="submit">send</button>
+    </form>
+
+    <button id="findNewBtn" class="btn btn-primary" onclick="window.location.href='/match'">
+        find new double
+    </button>
+</section>
 
 <%- include ('partials/footer') -%>
 
+<script src="/socket.io/socket.io.js"></script>
 
 <script>
-    //connects the usr to socket.io server
-    //creates a live WebSocket connection
   const socket = io();
 
-  //roomId is sent from matchUsers.js when rendering textChat.ejs
-  //makes sure each matched pair enters the same private room
-  const roomId = "<%= roomId %>"; // comes from controller
+  const roomId = "<%= roomId %>";
   const myName = "<%= user.userName %>";
   const partnerNameFromServer = "<%= partnerName %>";
 
-  const partnerNameEl = document.getElementById("partnerName");
-  partnerNameEl.textContent = partnerNameFromServer || "your partner";
+  document.getElementById("partnerName").textContent = partnerNameFromServer;
 
-  const form = document.getElementById("chat-form");
-  const input = document.getElementById("m");
-  const messages = document.getElementById("messages");
-  const timerEl = document.getElementById("timer");
-
-  //asks server to place this socket into the specific room
-  //server checks if room is full that way only 2 users can be in each room
+  // ----- JOIN ROOM -----
   socket.emit("joinRoom", { roomId });
 
+  // ----- CHAT -----
+  const form = document.getElementById("chat-form");
+  const input = document.getElementById("chat-input");
+  const messages = document.getElementById("messages");
 
-  //when user submits a message
   form.addEventListener("submit", (e) => {
-    e.preventDefault();//prevents page reload
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
 
-    const message = input.value.trim();//removes whitespaces
-    if (!message) return;//stops empty messages from sending
+    socket.emit("chatMessage", {
+      roomId,
+      message,
+      senderName: myName
+    });
 
-    //send the message + roomId to server
-    socket.emit("chatMessage", { roomId, message, senderName: myName });
-    input.value = "";//clears the input box
+    input.value = "";
   });
 
-
-  //when server sends a message back...
   socket.on("chatMessage", (data) => {
-    const li = document.createElement("p");//creates a new "list" item
-    li.textContent = data.message;//puts message text into the item
-    messages.appendChild(li);//adds it to the chat list
-
-    //auto-scroll chat to the bottom
+    const p = document.createElement("p");
+    p.textContent = `${data.senderName}: ${data.message}`;
+    messages.appendChild(p);
     messages.scrollTop = messages.scrollHeight;
   });
-//keeps only 2 users per room
-  socket.on("roomFull", () => {
-    alert("This room is already full.");
-  });
 
+  // ----- PARTNER DISCONNECTED -----
   socket.on("partnerDisconnected", () => {
-    alert("your partner disconnected :(");
-    window.location.href = "/match"
+    alert("Your partner disconnected.");
+    window.location.href = "/match";
   });
 
-  //pomodoro focus timer: 25 min
-
+  // ----- 25-MINUTE FOCUS TIMER -----
   let focusSeconds = 25 * 60;
+
+  const timerEl = document.getElementById("timer");
 
   function updateFocusTimer() {
     const mins = String(Math.floor(focusSeconds / 60)).padStart(2, "0");
     const secs = String(focusSeconds % 60).padStart(2, "0");
+
     timerEl.textContent = `${mins}:${secs}`;
 
     if (focusSeconds <= 0) {
-        //times up => go to solo break room
-        const url = `/break?roomId=${encodeURIComponent(
-            roomId
-        )}&partnerName=${encodeURIComponent(partnerNameFromServer)}`;
-        window.location.href = url;
+      // IMPORTANT: tell server we are intentionally navigating
+      socket.emit("goingOnBreak", { roomId });
+
+      window.location.href =
+        `/break?roomId=${encodeURIComponent(roomId)}&partnerName=${encodeURIComponent(partnerNameFromServer)}&mode=text`;
     } else {
-        focusSeconds--;
+      focusSeconds--;
     }
   }
 
   updateFocusTimer();
   setInterval(updateFocusTimer, 1000);
 </script>
+</body>
+</html>

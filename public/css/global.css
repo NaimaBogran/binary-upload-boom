@@ -1,0 +1,126 @@
+/*************************************
+GLOBAL COLORS
+*************************************/
+:root {
+  --cream: rgb(253, 245, 232);
+  --light-gray: rgb(242, 242, 242);
+  --soft-purple: rgb(204, 183, 246);
+  --purple: rgb(51, 50, 148);
+  --purple-dark: rgb(23, 23, 67);
+
+  --text-dark: #000;
+  --text-light: #fff;
+
+  --radius-card: 12px;
+  --radius-pill: 50px;
+}
+
+/*************************************
+RESET / BASE
+*************************************/
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--light-gray);
+  color: var(--text-dark);
+}
+
+/*************************************
+HEADINGS
+*************************************/
+h1, h2, h3, h4 {
+  font-family: 'Figtree', sans-serif;
+  margin: 0;
+}
+
+/*************************************
+CARD / CONTAINER
+*************************************/
+.card {
+  background: var(--cream);
+  padding: 30px;
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/*************************************
+BUTTON STYLES
+*************************************/
+.btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-light {
+  background: var(--cream);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  color: black;
+}
+
+.btn-primary {
+  background: var(--purple);
+  color: white;
+  box-shadow: 0 4px 6px var(--purple-dark);
+}
+
+.btn-outline-light {
+  background: transparent;
+  border: 1px solid var(--cream);
+  color: var(--cream);
+}
+
+/*************************************
+INPUTS
+*************************************/
+input, select, textarea {
+  padding: 12px;
+  border-radius: var(--radius-card);
+  border: 1px solid #ccc;
+  background: var(--cream);
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+}
+
+/*************************************
+CHAT BOXES
+*************************************/
+.chat-box {
+  background: var(--cream);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.chat-message {
+  background: white;
+  padding: 10px 15px;
+  border-radius: var(--radius-card);
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+/*************************************
+VIDEO BOXES
+*************************************/
+.video-container {
+  background: var(--cream);
+  padding: 20px;
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.video-container video {
+  width: 100%;
+  border-radius: var(--radius-card);
+}

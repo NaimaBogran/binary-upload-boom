@@ -64,11 +64,8 @@ router.get("/textChat/:roomId", ensureAuth, (req, res) => {
 });
 
 //solo break room (5 minutes)
-router.get("/break", ensureAuth, (req, res) => {
-    const partnerName = req.query.partnerName || "your partner";
-    const roomId = req.query.roomId || "";
-    res.render("breakRoom", { partnerName, roomId });
-})
+router.get("/break", ensureAuth, authController.getBreak);
+
 
 // Safety redirect if POST /match happens
 router.post("/match", ensureAuth, (req, res) => {

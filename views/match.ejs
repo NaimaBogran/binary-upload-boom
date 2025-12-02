@@ -1,12 +1,13 @@
 <%- include('partials/loggedInHeader') -%>
 
 <main class="match-page">
+    <div class="card" style="text-align: center; padding: 50px;">
     <h1>finding your BODY/DOUBLE...</h1>
     <p id="status">connecting you with a partner who matches your prefrences</p>
+    </div>
 </main>
 
 <%- include('partials/footer') -%>
-
 <script>
     //socket.io client
     const socket = io();
@@ -20,6 +21,9 @@
         camera: "<%= filters.camera %>",
         workType: <%- JSON.stringify(filters.workType || []) %>
     };
+
+    // Attach mode for server reference
+    userInfo.mode = userInfo.camera === "on" ? "video" : "text";
 
     //ask server to find a match
     socket.emit("lookingForMatch", userInfo);
@@ -45,6 +49,7 @@
                 enter room
             </button>
         `;
+
         document.getElementById("enterRoomBtn").addEventListener("click", () => {
             if (myCamera === "on") {
                 window.location.href =
@@ -54,6 +59,5 @@
                 `/textChat/${roomId}?partnerName=${encodeURIComponent(partner.userName)}`;
             }
         });
-    })
-        
+    });
 </script>

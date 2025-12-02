@@ -32,6 +32,12 @@ app.set("view engine", "ejs");
 //Static Folder
 app.use(express.static("public"));
 
+app.use((req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
+
+
 //Body Parsing
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -57,10 +63,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use((req, res, next) => {
-    res.locals.user = req.user; // makes `user` available in ALL EJS files
-    next();
+  res.locals.user = req.user;
+  next();
 });
-
 
 //Use flash messages for errors, info, ect...
 app.use(flash());
@@ -75,53 +80,63 @@ const server = createServer(app);
 //creates socket.io instance
 const io = new Server(server);
 
+// =============================
+//      MATCH / BREAK STATE
+// =============================
 
-//real time matching queue state
-let waitingUser = null; //{ socketId, userInfo }
+// One waiting user
+let waitingUser = null;
+
+// Map socket.id → roomId
 const socketToRoom = {};
 
-//handle websocket connections | socketio handlers
+// Stores break choices
+// roomState[roomId] = { choices: {}, sockets: [] }
+const roomState = {};
+
+// 🔥 GLOBAL — Tracks intentional navigation to break
+const goingOnBreak = {};
+
 io.on("connection", (socket) => {
   console.log("a user connected:", socket.id);
 
-//user asks to find a match
-socket.on("lookingForMatch", (userInfo) => {
-  //userInfo: { userId, userName, cameraType, workType[] }
+  // =============================
+  //       MATCHING
+  // =============================
+  socket.on("lookingForMatch", (userInfo) => {
+    if (!waitingUser) {
+      waitingUser = { socketId: socket.id, userInfo };
+      io.to(socket.id).emit("waiting");
+      return;
+    }
 
-  if(!waitingUser) {
-    //no one waiting => this user waits
-    waitingUser = { socketId: socket.id, userInfo };
-    io.to(socket.id).emit("waiting");
-    return;
-  }
+    const partner = waitingUser;
+    waitingUser = null;
 
-  //someone is waiting => match them
-  const partner = waitingUser;
-  waitingUser = null; //reset queue
+    const ids = [userInfo.userId, partner.userInfo.userId].sort();
+    const roomId = `room-${ids[0]}-${ids[1]}`;
 
-  //create roomId sp both users share the same one
-  const ids = [userInfo.userId, partner.userInfo.userId].sort();
-  const roomId = `room-${ids[0]}-${ids[1]}`;
+    // Notify both users
+    io.to(partner.socketId).emit("matchFound", {
+      roomId,
+      partner: userInfo,
+      isCaller: true,
+    });
 
-  //notify both users that a match was found, stops user a from having to refresh once matched with user b
-  io.to(partner.socketId).emit("matchFound", {
-    roomId,
-    partner: userInfo, //partner for user a
-    isCaller: true
+    io.to(socket.id).emit("matchFound", {
+      roomId,
+      partner: partner.userInfo,
+      isCaller: false,
+    });
   });
 
-  io.to(socket.id).emit("matchFound", {
-    roomId,
-    partner: partner.userInfo, //partner for user b
-    isCaller: false
-  });
-});
-
+  // =============================
+  //        JOIN ROOM
+  // =============================
   socket.on("joinRoom", ({ roomId }) => {
     const room = io.sockets.adapter.rooms.get(roomId);
 
-    //allows max 2 peopls per room
-    if (room && room.size >= 2 ) {
+    if (room && room.size >= 2) {
       socket.emit("roomFull");
       return;
     }
@@ -132,8 +147,54 @@ socket.on("lookingForMatch", (userInfo) => {
     console.log(`${socket.id} joined room ${roomId}`);
   });
 
-  //webrtc signaling
-  socket.on("readyToCall", ({roomId}) => {
+  // =============================
+  //      USER GOING TO BREAK
+  // =============================
+  socket.on("goingOnBreak", ({ roomId }) => {
+    console.log(socket.id, "is going on break");
+    goingOnBreak[socket.id] = true;
+  });
+
+  // =============================
+  //        BREAK CHOICES
+  // =============================
+  socket.on("breakChoice", ({ roomId, choice }) => {
+    console.log("breakChoice", socket.id, "room", roomId, "choice", choice);
+
+    if (!roomId) return;
+
+    if (!roomState[roomId]) {
+      roomState[roomId] = { choices: {}, sockets: [] };
+    }
+
+    const state = roomState[roomId];
+
+    if (!state.choices[socket.id]) {
+      state.sockets.push(socket.id);
+    }
+
+    state.choices[socket.id] = choice;
+
+    // When both users have chosen
+    if (state.sockets.length === 2) {
+      const [u1, u2] = state.sockets;
+      const c1 = state.choices[u1];
+      const c2 = state.choices[u2];
+
+      let action = (c1 === "stay" && c2 === "stay") ? "stay" : "new";
+
+      // Send result directly to each user
+      io.to(u1).emit("breakResult", { action });
+      io.to(u2).emit("breakResult", { action });
+
+      delete roomState[roomId];
+    }
+  });
+
+  // =============================
+  //      WEBRTC + CHAT
+  // =============================
+  socket.on("readyToCall", ({ roomId }) => {
     socket.to(roomId).emit("readyToCall");
   });
 
@@ -152,40 +213,46 @@ socket.on("lookingForMatch", (userInfo) => {
   socket.on("iceCandidate", ({ roomId, candidate }) => {
     socket.to(roomId).emit("iceCandidate", { candidate });
   });
-  //when a chat is sent
+
   socket.on("chatMessage", ({ roomId, message, senderName }) => {
-    io.to(roomId).emit("chatMessage", {
-      message,
-      senderName,
-    });
+    io.to(roomId).emit("chatMessage", { message, senderName });
   });
 
+  // =============================
+  //        DISCONNECT
+  // =============================
   socket.on("disconnect", () => {
     console.log("a user disconnected", socket.id);
 
-    //if a waiting user disconnects, clear them
-    if(waitingUser && waitingUser.socketId === socket.id) {
-      waitingUser = null;
+    // If they intentionally went to break → ignore disconnect
+    if (goingOnBreak[socket.id]) {
+      console.log("intentional break disconnect:", socket.id);
+      delete goingOnBreak[socket.id];
+      delete socketToRoom[socket.id];
+      return;
     }
 
-    //gets the chat room this socket was in (not its own auto-room/the id)
+    // Unexpected disconnect
     const roomId = socketToRoom[socket.id];
-
     if (roomId) {
-      //notify remaining user
+      console.log("unexpected disconnect:", socket.id, "→ notify partner");
       socket.to(roomId).emit("partnerDisconnected");
-
-      //cleanup
       delete socketToRoom[socket.id];
     }
+
+    // If they were waiting in queue
+    if (waitingUser && waitingUser.socketId === socket.id) {
+      waitingUser = null;
+    }
   });
+
 });
 
-//Server Running
+// =============================
+//         START SERVER
+// =============================
 const PORT = process.env.PORT;
 
 server.listen(PORT, () => {
   console.log("Server is running, you better catch it!");
 });
-
-

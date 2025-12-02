@@ -141,14 +141,18 @@
 <section id="video-wrapper">
     <div class="video-box">
         <p class="video-label">you</p>
-        <video id="localVideo" autoplay playsinline muted></video>
+        <div class="video-container card">
+        <video id="localVideo" autoplay playsinline></video>
+        </div>
     </div>
 
     <div id="timer">25:00</div>
 
     <div class="video-box">
         <p class="video-label"><%= partnerName %></p>
-        <video id="remoteVideo" autoplay playsinline muted></video>
+        <div class="video-container card">
+        <video id="remoteVideo" autoplay playsinline></video>
+        </div>
     </div>
 </section>
 
@@ -165,14 +169,13 @@
         <button id="sendBtn" type="submit">send</button>
     </form>
 
-    <button id="findNewBtn" onclick="window.location.href='/match'">
+    <button id="findNewBtn" class="btn btn-primary" onclick="window.location.href='/match'">
         find new double
     </button>
 </section>
 
 
 <%- include("partials/footer") %>
-
 
 <script>
 /* ======================================
@@ -186,6 +189,7 @@ const partnerName = "<%= partnerName %>";
 const isCaller = "<%= isCaller %>" === "true";
 
 socket.emit("joinRoom", { roomId });
+socket.emit("readyToCall", { roomId });
 
 /* ======================================
         CHAT 
@@ -227,7 +231,7 @@ socket.on("partnerDisconnected", () => {
 /* ======================================
         25-MIN POMODORO TIMER
 ====================================== */
-let focusSeconds = 25 * 60;
+let focusSeconds = .5 * 60;
 const timerEl = document.getElementById("timer");
 
 function updateFocusTimer() {
@@ -236,17 +240,18 @@ function updateFocusTimer() {
     timerEl.textContent = `${mins}:${secs}`;
 
     if (focusSeconds <= 0) {
-        // time's up → end call + go to break
-        cleanupVideo();
-        window.location.href = `/break?roomId=${roomId}&partnerName=${partnerName}`;
-    } else {
-        focusSeconds--;
+    cleanupVideo();
+    socket.emit("goingOnBreak", { roomId });  
+    window.location.href =
+      `/break?roomId=${encodeURIComponent(roomId)}&partnerName=${encodeURIComponent(partnerName)}&mode=video`;
+    }else {
+      focusSeconds--;
     }
+
 }
 
 updateFocusTimer();
 setInterval(updateFocusTimer, 1000);
-
 
 /* ======================================
         WEBRTC VIDEO
@@ -287,10 +292,18 @@ async function setupLocalMedia() {
                 width: { ideal: 1280 },
                 height: { ideal: 720 } 
             },
-            audio: true,
-        });
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                sampleRate: 44100
+            }
+    });
+        const localVideoEl = document.getElementById("localVideo");
+        
+        localVideoEl.srcObject = localStream;
 
-        document.getElementById("localVideo").srcObject = localStream;
+        localVideoEl.muted = true;
+        
 
         if (isCaller) {
             await startCallAsCaller();
@@ -319,7 +332,9 @@ function createPeerConnection() {
             peerConnection.addTrack(track, localStream);
         });
     }
-}
+    
+};
+
 
 // caller: create offer
 async function startCallAsCaller() {

@@ -1,8 +1,8 @@
 <%- include ('partials/loggedInHeader') -%>
 
 <section>
+<div class="card">
 <form action="/filters" method="POST">
-
   <h2>what are you working on?</h2>
   <label><input type="checkbox" name="workType" value="studying"> Studying</label>
   <label><input type="checkbox" name="workType" value="coding"> Coding</label>
@@ -13,9 +13,9 @@
   <label><input type="radio" name="camera" value="on" required> Camera On</label>
   <label><input type="radio" name="camera" value="off" required> Camera Off</label>
 
-  <button type="submit">find your BODY/DOUBLE</button>
+  <button class="btn btn-primary" type="submit">find your BODY/DOUBLE</button>
 </form>
-
+</div>
 </section>
 
 <%- include('partials/footer') -%>
