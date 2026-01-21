@@ -296,7 +296,7 @@ socket.on("partnerDisconnected", () => {
          TIMER
 ============================= */
 
-let focusSeconds = 1 * 60; // 30s for testing; change to 25 * 60 for real
+let focusSeconds = 25 * 60; 
 
 function updateFocusTimer() {
     const mins = String(Math.floor(focusSeconds / 60)).padStart(2, "0");
