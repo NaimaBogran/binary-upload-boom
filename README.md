@@ -18,13 +18,13 @@ This project emphasizes responsive design, real-time collaboration concepts, and
 * **Pomodoro Integration:** Focus with timed work sessions and breaks to boost productivity.
 * **Seamless Virtual Collaboration:** Meet, chat, and work alongside peers in real time.
 * **Mondern UI Components:** Rounded cards, shadowed buttons, and minimalist typography inspired by productivity apps.
-* **Scalable Structure:** Built with reusable HTML and CSS components for easy future expansion (e.g., chat, scheduling, and video integration).
+* **Scalable Structure:** Built with reusable EJS and CSS components for easy future expansion (e.g., chat, scheduling, and video integration).
 
 ## 🛠️ Tech Stack
 
-* **Frontend:** HTML5, CSS3 (Flexbox, Responsive Design), Vanilla JavaScript (ES6+)
+* **Frontend:** EJS, CSS3 (Flexbox, Responsive Design), Vanilla JavaScript (ES6+)
 * **Core Concepts:** DOM Manipulation, Event Handling, Modular Layout Structure, and User Interface Design Principles
-* **Deployment:** Netlify
+* **Deployment:** Fly.IO
 
 ## 🚀 Getting Started
 
