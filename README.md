@@ -9,9 +9,8 @@ This project emphasizes responsive design, real-time collaboration concepts, and
 
 ---
 
-<img width="200" height="200" alt="image" src="public/img/bodyDouble_logo.png" />
-<img width="500" height="300" alt="image" src="public/img/readmeimg1.png" />
-<img width="500" height="300" alt="image" src="public/img/readmeimg2.png" />
+<img width="700" height="500" alt="image" src="public/img/readmeimg1.png" />
+<img width="700" height="500" alt="image" src="public/img/readmeimg2.png" />
 
 
 ## ✨ Features
