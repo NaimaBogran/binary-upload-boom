@@ -1,10 +1,16 @@
 //everything needed to set up server
 //mods needed to make it work
 
+
+//Use .env file in config folder
+require("dotenv").config({ path: "./config/.env" });
+
 const express = require("express");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
+
 
 const mongoose = require("mongoose");
 const passport = require("passport");
@@ -17,8 +23,6 @@ const connectDB = require("./config/database");
 const mainRoutes = require("./routes/main");
 const postRoutes = require("./routes/posts");
 
-//Use .env file in config folder
-require("dotenv").config({ path: "./config/.env" });
 
 // Passport config
 require("./config/passport")(passport);
@@ -48,19 +52,24 @@ app.use(logger("dev"));
 //Use forms for put / delete
 app.use(methodOverride("_method"));
 
-// Setup Sessions - stored in MongoDB
+app.set("trust proxy", 1); // REQUIRED for Fly.io
+
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "dev-secret-change-me",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: new MongoStore({ mongooseConnection: mongoose.connection }),
+    store: new MongoStore({
+      mongooseConnection: mongoose.connection,
+    }),
     cookie: {
-      sameSite: "lax",
-      secure: true || process.env.NODE_ENV === "production",
+      secure: isProduction,             
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 1000 * 60 * 60 * 24,
     },
   })
 );
+
 
 
 // Passport middleware
