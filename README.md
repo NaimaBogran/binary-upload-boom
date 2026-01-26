@@ -25,7 +25,8 @@ This project emphasizes responsive design, real-time collaboration concepts, and
 
 * **Frontend:** EJS, CSS3 (Flexbox, Responsive Design), Vanilla JavaScript (ES6+)
 * **Core Concepts:** DOM Manipulation, Event Handling, Modular Layout Structure, and User Interface Design Principles
-* **Deployment:** Fly.IO
+* **Deployment:** Render
+  https://body-double.onrender.com/
 
 ## 🚀 Getting Started
 
