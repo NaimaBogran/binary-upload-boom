@@ -57,7 +57,7 @@ app.use(
     store: new MongoStore({ mongooseConnection: mongoose.connection }),
     cookie: {
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: true || process.env.NODE_ENV === "production",
     },
   })
 );
